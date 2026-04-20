@@ -1,6 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { CreateSongDto } from './dto/create-song.dto';
 import { Document } from 'mongoose';
 
@@ -36,8 +40,19 @@ export class SongsService {
     return this.songModel.find(query).exec();
   }
 
-  async findOne(id: string): Promise<Song | null> {
-    return this.songModel.findById(id).exec();
+  async findOne(id: string): Promise<Song> {
+    // Validate MongoDB ObjectId
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException(`Invalid song ID: ${id}`);
+    }
+
+    const song = await this.songModel.findById(id).exec();
+
+    if (!song) {
+      throw new NotFoundException(`Song with ID ${id} not found`);
+    }
+
+    return song;
   }
 
   async create(createSongDto: CreateSongDto): Promise<Song> {
