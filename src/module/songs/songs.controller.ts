@@ -15,6 +15,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { SongsService, type UploadedAudioFile } from './songs.service';
 import { CreateSongDto } from './dto/create-song.dto';
+import { NormalizeSongDto } from './dto/normalize-song.dto';
 
 @Controller('songs')
 export class SongsController {
@@ -43,6 +44,11 @@ export class SongsController {
   @Post()
   create(@Body() createSongDto: CreateSongDto) {
     return this.songsService.create(createSongDto);
+  }
+
+  @Post('normalize')
+  normalize(@Body() normalizeSongDto: NormalizeSongDto) {
+    return this.songsService.normalize(normalizeSongDto);
   }
 
   @Put(':id')
