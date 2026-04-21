@@ -10,6 +10,7 @@ import { NormalizeSongDto } from './dto/normalize-song.dto';
 import { Document } from 'mongoose';
 import { v2 as cloudinary } from 'cloudinary';
 import { Readable } from 'stream';
+import { generateSlug } from './songs.schema';
 
 export type UploadedAudioFile = {
   mimetype: string;
@@ -19,6 +20,7 @@ export type UploadedAudioFile = {
 
 export interface Song extends Document {
   title: string;
+  slug: string;
   category: string;
   sections: Array<{
     title: string;
@@ -374,8 +376,28 @@ export class SongsService {
     return song;
   }
 
+  async findBySlug(slug: string): Promise<Song> {
+    if (!slug || slug.trim() === '') {
+      throw new BadRequestException('Slug is required');
+    }
+
+    const song = await this.songModel.findOne({ slug: slug.trim() }).exec();
+
+    if (!song) {
+      throw new NotFoundException(`Song with slug '${slug}' not found`);
+    }
+
+    return song;
+  }
+
   async create(createSongDto: CreateSongDto): Promise<Song> {
-    const newSong = new this.songModel(createSongDto);
+    // Generate slug from title
+    const songData = {
+      ...createSongDto,
+      slug: generateSlug(createSongDto.title || 'untitled'),
+    };
+
+    const newSong = new this.songModel(songData);
     return newSong.save();
   }
 

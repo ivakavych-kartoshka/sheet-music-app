@@ -41,6 +41,11 @@ export class SongsController {
     return this.songsService.findOne(id);
   }
 
+  @Get('slug/:slug')
+  findBySlug(@Param('slug') slug: string) {
+    return this.songsService.findBySlug(slug);
+  }
+
   @Post()
   create(@Body() createSongDto: CreateSongDto) {
     return this.songsService.create(createSongDto);
