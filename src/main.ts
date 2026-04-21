@@ -7,7 +7,8 @@ async function bootstrap() {
 
   app.enableCors({
     origin: [
-      'http://localhost:3000',
+      /^http:\/\/localhost:\d+$/,
+      /^http:\/\/127\.0\.0\.1:\d+$/,
       'https://sheet-music-app-client.vercel.app',
     ],
     credentials: true,
@@ -25,4 +26,4 @@ async function bootstrap() {
   await app.listen(port);
   console.log(`🚀 Server running on port ${port}`);
 }
-bootstrap();
+void bootstrap();

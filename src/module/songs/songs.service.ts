@@ -22,12 +22,27 @@ export interface Song extends Document {
   images?: string[];
 }
 
+export interface FindSongsResult {
+  items: Song[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 @Injectable()
 export class SongsService {
   constructor(@InjectModel('Song') private readonly songModel: Model<Song>) {}
 
-  async findAll(search?: string, category?: string): Promise<Song[]> {
+  async findAll(
+    search?: string,
+    category?: string,
+    page = 1,
+    limit = 9,
+  ): Promise<FindSongsResult> {
     const query: Record<string, any> = {};
+    const normalizedPage = Math.max(1, page);
+    const normalizedLimit = Math.min(Math.max(1, limit), 50);
 
     if (search) {
       query.title = { $regex: search, $options: 'i' };
@@ -37,7 +52,34 @@ export class SongsService {
       query.category = category;
     }
 
-    return this.songModel.find(query).exec();
+    const [items, total] = await Promise.all([
+      this.songModel
+        .find(query)
+        .sort({ title: 1 })
+        .skip((normalizedPage - 1) * normalizedLimit)
+        .limit(normalizedLimit)
+        .exec(),
+      this.songModel.countDocuments(query).exec(),
+    ]);
+
+    const totalPages = Math.max(1, Math.ceil(total / normalizedLimit));
+
+    return {
+      items,
+      total,
+      page: normalizedPage,
+      limit: normalizedLimit,
+      totalPages,
+    };
+  }
+
+  async findCategories(): Promise<string[]> {
+    const categories = await this.songModel.distinct('category').exec();
+
+    return categories
+      .map((category) => category?.trim())
+      .filter((category): category is string => Boolean(category))
+      .sort((a, b) => a.localeCompare(b));
   }
 
   async findOne(id: string): Promise<Song> {

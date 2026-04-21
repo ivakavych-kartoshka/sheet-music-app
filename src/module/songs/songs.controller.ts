@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Query,
+  DefaultValuePipe,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { SongsService } from './songs.service';
 import { CreateSongDto } from './dto/create-song.dto';
 
@@ -10,8 +19,15 @@ export class SongsController {
   findAll(
     @Query('search') search?: string,
     @Query('category') category?: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page = 1,
+    @Query('limit', new DefaultValuePipe(9), ParseIntPipe) limit = 9,
   ) {
-    return this.songsService.findAll(search, category);
+    return this.songsService.findAll(search, category, page, limit);
+  }
+
+  @Get('categories')
+  findCategories() {
+    return this.songsService.findCategories();
   }
 
   @Get(':id')
