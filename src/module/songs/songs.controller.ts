@@ -2,13 +2,18 @@ import {
   Controller,
   Get,
   Post,
+  Put,
+  Delete,
   Body,
   Param,
   Query,
   DefaultValuePipe,
   ParseIntPipe,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
-import { SongsService } from './songs.service';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { SongsService, type UploadedAudioFile } from './songs.service';
 import { CreateSongDto } from './dto/create-song.dto';
 
 @Controller('songs')
@@ -38,5 +43,27 @@ export class SongsController {
   @Post()
   create(@Body() createSongDto: CreateSongDto) {
     return this.songsService.create(createSongDto);
+  }
+
+  @Put(':id')
+  update(@Param('id') id: string, @Body() updateSongDto: CreateSongDto) {
+    return this.songsService.update(id, updateSongDto);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.songsService.remove(id);
+  }
+
+  @Post('upload-audio')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: {
+        fileSize: 20 * 1024 * 1024,
+      },
+    }),
+  )
+  uploadAudio(@UploadedFile() file: UploadedAudioFile) {
+    return this.songsService.uploadAudio(file);
   }
 }
