@@ -395,8 +395,10 @@ export class SongsService {
     const songData = {
       ...createSongDto,
       slug: generateSlug(createSongDto.title || 'untitled'),
+      // If no sections provided, create empty array
+      sections: createSongDto.sections || [],
     };
-
+    
     const newSong = new this.songModel(songData);
     return newSong.save();
   }

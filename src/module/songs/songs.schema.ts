@@ -35,9 +35,8 @@ export const SongSchema = new Schema({
 });
 
 // Pre-save middleware to generate slug from title
-SongSchema.pre('save', function (next: any) {
+SongSchema.pre('save', async function (next: any) {
   if (this.isModified('title') || this.isNew) {
     this.slug = generateSlug(this.title);
   }
-  next();
 });

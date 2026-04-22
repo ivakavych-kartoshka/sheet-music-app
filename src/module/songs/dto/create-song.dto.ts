@@ -39,8 +39,8 @@ export class CreateSongDto {
   @IsNotEmpty({ message: 'Category is required' })
   category?: string;
 
+  @IsOptional()
   @IsArray({ message: 'Sections must be an array' })
-  @ArrayMinSize(1, { message: 'Sections must have at least 1 item' })
   @ValidateNested({ each: true })
   @Type(() => SectionDto)
   sections?: SectionDto[];
