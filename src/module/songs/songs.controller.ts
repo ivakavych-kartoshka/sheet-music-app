@@ -11,9 +11,14 @@ import {
   ParseIntPipe,
   UseInterceptors,
   UploadedFile,
+  UploadedFiles,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { SongsService, type UploadedAudioFile } from './songs.service';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import {
+  SongsService,
+  type UploadedAudioFile,
+  type UploadedSheetFile,
+} from './songs.service';
 import { CreateSongDto } from './dto/create-song.dto';
 import { NormalizeSongDto } from './dto/normalize-song.dto';
 
@@ -76,5 +81,29 @@ export class SongsController {
   )
   uploadAudio(@UploadedFile() file: UploadedAudioFile) {
     return this.songsService.uploadAudio(file);
+  }
+
+  @Post('upload-sheet')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: {
+        fileSize: 15 * 1024 * 1024,
+      },
+    }),
+  )
+  uploadSheet(@UploadedFile() file: UploadedSheetFile) {
+    return this.songsService.uploadSheet(file);
+  }
+
+  @Post('upload-sheets')
+  @UseInterceptors(
+    FilesInterceptor('files', 20, {
+      limits: {
+        fileSize: 15 * 1024 * 1024,
+      },
+    }),
+  )
+  uploadSheets(@UploadedFiles() files: UploadedSheetFile[]) {
+    return this.songsService.uploadSheets(files);
   }
 }

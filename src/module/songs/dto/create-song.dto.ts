@@ -50,6 +50,15 @@ export class CreateSongDto {
   audioUrl?: string;
 
   @IsOptional()
+  @IsString({ message: 'Sheet URL must be a string' })
+  sheetUrl?: string;
+
+  @IsOptional()
+  @IsArray({ message: 'Sheet URLs must be an array' })
+  @Type(() => Array)
+  sheetUrls?: string[];
+
+  @IsOptional()
   @IsArray({ message: 'Images must be an array' })
   @Type(() => Array)
   images?: string[];

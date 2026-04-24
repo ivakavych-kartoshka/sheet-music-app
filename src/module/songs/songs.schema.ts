@@ -31,11 +31,13 @@ export const SongSchema = new Schema({
   ],
 
   audioUrl: String,
+  sheetUrl: String,
+  sheetUrls: [String],
   images: [String],
 });
 
 // Pre-save middleware to generate slug from title
-SongSchema.pre('save', async function (next: any) {
+SongSchema.pre('save', function (this: any) {
   if (this.isModified('title') || this.isNew) {
     this.slug = generateSlug(this.title);
   }

@@ -18,6 +18,12 @@ export type UploadedAudioFile = {
   buffer: Buffer;
 };
 
+export type UploadedSheetFile = {
+  mimetype: string;
+  originalname: string;
+  buffer: Buffer;
+};
+
 export interface Song extends Document {
   title: string;
   slug: string;
@@ -30,6 +36,8 @@ export interface Song extends Document {
     }>;
   }>;
   audioUrl?: string;
+  sheetUrl?: string;
+  sheetUrls?: string[];
   images?: string[];
 }
 
@@ -278,6 +286,8 @@ export class SongsService {
       category: normalizeSongDto.category?.trim() || 'Nhac Tre',
       sections,
       audioUrl: normalizeSongDto.audioUrl?.trim() || mp3Url || youtubeUrl || '',
+      sheetUrl: '',
+      sheetUrls: [],
       images: [],
     };
 
@@ -398,7 +408,7 @@ export class SongsService {
       // If no sections provided, create empty array
       sections: createSongDto.sections || [],
     };
-    
+
     const newSong = new this.songModel(songData);
     return newSong.save();
   }
@@ -453,7 +463,6 @@ export class SongsService {
 
     const uploaded = await new Promise<{ secure_url: string }>(
       (resolve, reject) => {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const uploadStream = cloudinary.uploader.upload_stream(
           {
             resource_type: 'video',
@@ -475,5 +484,73 @@ export class SongsService {
     );
 
     return { audioUrl: uploaded.secure_url };
+  }
+
+  async uploadSheet(file: UploadedSheetFile): Promise<{ sheetUrl: string }> {
+    if (!file) {
+      throw new BadRequestException('Sheet file is required');
+    }
+
+    const sheetUrl = await this.uploadSingleSheet(file);
+    return { sheetUrl };
+  }
+
+  async uploadSheets(
+    files: UploadedSheetFile[],
+  ): Promise<{ sheetUrls: string[] }> {
+    if (!files || files.length === 0) {
+      throw new BadRequestException('At least one sheet file is required');
+    }
+
+    const sheetUrls = await Promise.all(
+      files.map((file) => this.uploadSingleSheet(file)),
+    );
+
+    return { sheetUrls };
+  }
+
+  private async uploadSingleSheet(file: UploadedSheetFile): Promise<string> {
+    const mimetype = file.mimetype.toLowerCase();
+    const filename = file.originalname.toLowerCase();
+    const isSupported =
+      mimetype === 'image/png' ||
+      mimetype === 'image/jpeg' ||
+      mimetype === 'application/pdf' ||
+      filename.endsWith('.png') ||
+      filename.endsWith('.jpg') ||
+      filename.endsWith('.jpeg') ||
+      filename.endsWith('.pdf');
+
+    if (!isSupported) {
+      throw new BadRequestException(
+        'Only png, jpg, jpeg, and pdf are supported',
+      );
+    }
+
+    cloudinary.config(this.getCloudinaryConfig());
+
+    const uploaded = await new Promise<{ secure_url: string }>(
+      (resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            resource_type: 'auto',
+            folder: 'sheet-music-app/sheets',
+          },
+          (error, result) => {
+            if (error || !result?.secure_url) {
+              // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+              reject(error ?? new Error('Cloudinary upload failed'));
+              return;
+            }
+
+            resolve({ secure_url: result.secure_url });
+          },
+        );
+
+        Readable.from(file.buffer).pipe(uploadStream);
+      },
+    );
+
+    return uploaded.secure_url;
   }
 }
