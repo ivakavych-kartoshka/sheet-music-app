@@ -12,6 +12,7 @@ import {
   UseInterceptors,
   UploadedFile,
   UploadedFiles,
+  UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import {
@@ -21,6 +22,7 @@ import {
 } from './songs.service';
 import { CreateSongDto } from './dto/create-song.dto';
 import { NormalizeSongDto } from './dto/normalize-song.dto';
+import { AdminGuard } from '../auth/admin.guard';
 
 @Controller('songs')
 export class SongsController {
@@ -52,26 +54,31 @@ export class SongsController {
   }
 
   @Post()
+  @UseGuards(AdminGuard)
   create(@Body() createSongDto: CreateSongDto) {
     return this.songsService.create(createSongDto);
   }
 
   @Post('normalize')
+  @UseGuards(AdminGuard)
   normalize(@Body() normalizeSongDto: NormalizeSongDto) {
     return this.songsService.normalize(normalizeSongDto);
   }
 
   @Put(':id')
+  @UseGuards(AdminGuard)
   update(@Param('id') id: string, @Body() updateSongDto: CreateSongDto) {
     return this.songsService.update(id, updateSongDto);
   }
 
   @Delete(':id')
+  @UseGuards(AdminGuard)
   remove(@Param('id') id: string) {
     return this.songsService.remove(id);
   }
 
   @Post('upload-audio')
+  @UseGuards(AdminGuard)
   @UseInterceptors(
     FileInterceptor('file', {
       limits: {
@@ -84,6 +91,7 @@ export class SongsController {
   }
 
   @Post('upload-sheet')
+  @UseGuards(AdminGuard)
   @UseInterceptors(
     FileInterceptor('file', {
       limits: {
@@ -96,6 +104,7 @@ export class SongsController {
   }
 
   @Post('upload-sheets')
+  @UseGuards(AdminGuard)
   @UseInterceptors(
     FilesInterceptor('files', 20, {
       limits: {
