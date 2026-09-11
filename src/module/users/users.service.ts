@@ -40,9 +40,6 @@ export class UsersService {
       user = await this.userModel.findOne({ email: profile.email }).exec();
       if (user) {
         user.googleId = profile.googleId;
-        user.avatar = profile.avatar || user.avatar;
-        user.name = profile.name || user.name;
-        await user.save();
       }
     }
 
@@ -54,6 +51,10 @@ export class UsersService {
         avatar: profile.avatar,
         mustSetPassword: true,
       });
+    } else {
+      user.avatar = profile.avatar || user.avatar;
+      user.name = profile.name || user.name;
+      await user.save();
     }
 
     const hasPassword = Boolean(user.password);

@@ -2,8 +2,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { AppService } from './app.service';
 import { AppController } from './app.controller';
+import { ApiKeyGuard } from './common/api-key.guard';
 import { SongsModule } from './module/songs/songs.module';
 import { AuthModule } from './module/auth/auth.module';
 import { UsersModule } from './module/users/users.module';
@@ -11,6 +14,16 @@ import { UsersModule } from './module/users/users.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => [
+        {
+          ttl: configService.get<number>('THROTTLE_TTL') ?? 60_000,
+          limit: configService.get<number>('THROTTLE_LIMIT') ?? 120,
+        },
+      ],
+    }),
 
     MongooseModule.forRootAsync({
       inject: [ConfigService],
@@ -57,6 +70,16 @@ import { UsersModule } from './module/users/users.module';
     UsersModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ApiKeyGuard,
+    },
+    AppService,
+  ],
 })
 export class AppModule {}
